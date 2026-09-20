@@ -230,34 +230,9 @@ export default function Home() {
           </div>
         </div>)}
 
-        <div className="liveBoard">
-          <div className="liveHeader">
-            <div><b>🚆 Trenes reales disponibles</b><div className="muted">Mollet-Sant Fost · tablero actualizado automáticamente</div></div>
-            <button className="refreshButton" onClick={loadTrains} disabled={trainsLoading}>{trainsLoading ? "Actualizando…" : "↻ Actualizar"}</button>
-          </div>
-          {trainsError && <div className="error">{trainsError}</div>}
-          {!trainsError && trainsLoading && trains.length===0 && <div className="muted">Consultando salidas reales…</div>}
-          {!trainsError && trainCandidates.map((train,index)=>{
-            const key=train.id || `${train.train}-${train.time}-${index}`;
-            const isSelected=selectedTrain===key;
-            return <button className={"trainCard "+(isSelected?"selectedTrain":"")} key={key} onClick={()=>chooseTrain(train)}>
-              <div className="trainTime">{train.time}</div>
-              <div className="trainMain"><b>{train.destination}</b><div className="muted">{train.line}{train.train ? ` · tren ${train.train}` : ""}{train.platform ? ` · vía ${train.platform}` : ""}</div></div>
-              <div className="trainMeta">{train.delay && train.delay > 0 ? `+${train.delay} min` : "Puntual"}</div>
-              <div className="trainFit">{train.catchesIt ? `🟢 Llegada estimada ${formatMinutes(train.estimatedArrival)}` : `🔴 No llega antes de ${arrival}`}</div>
-            </button>;
-          })}
-          {!trainsError && !trainsLoading && trainCandidates.length===0 && <div className="muted">No hay salidas compatibles en el tablero ahora mismo.</div>}
-          {trainCandidates.length>0 && <div className="nextHint">Si seleccionas un tren que no puedes coger, el siguiente aparece justo debajo para que puedas comparar el margen.</div>}
-          <div className="attribution">Datos ferroviarios públicos de Renfe/ADIF mediante RadarDeTrenes. Actualización aproximada del tablero: 15–30 s. Información orientativa.</div>
-        </div>
       </article>)}
     </section>}
 
-    <section className="features">
-      <div className="feature"><b>🚆 Horarios reales</b><span className="muted">Salidas, retrasos y vías cuando están disponibles.</span></div>
-      <div className="feature"><b>🧮 Cálculo hacia atrás</b><span className="muted">Llegada, transbordos y margen forman una sola ruta.</span></div>
-      <div className="feature"><b>🗺️ Navegación</b><span className="muted">Cada tramo puede abrirse directamente en Google Maps.</span></div>
-    </section>
+
   </main>;
 }
