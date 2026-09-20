@@ -105,7 +105,12 @@ export default function Home() {
     ]}];
   },[submitted,mode,origin,destination]);
 
-  const liveTrainRows = trains.filter(train => /barcelona|sants|castelldefels|aeroport/i.test(train.destination));
+  const liveTrainRows = trains.filter(train => {
+    const destination = train.destination.toLowerCase();
+    const line = train.line.toUpperCase();
+    const southboundDestination = /aeroport|el prat|castelldefels|vilanova|sitges|sant vicenç|garraf|calafell/i.test(destination);
+    return /R2N?|R2S/.test(line) && southboundDestination;
+  });
   const arrivalMinutes = toMinutes(arrival);
   const trainCandidates = liveTrainRows.map((train,index) => {
     const departure = toMinutes(train.time);
