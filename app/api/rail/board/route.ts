@@ -17,9 +17,9 @@ function findArrays(value: unknown): unknown[][] {
 function normalizeTime(value: unknown): string {
   const raw = text(value);
   if (!raw) return "";
-  const iso = raw.match(/T(\\d{2}:\\d{2})/);
+  const iso = raw.match(/T(\d{2}:\d{2})/);
   if (iso) return iso[1];
-  const hm = raw.match(/(^|\\s)(\\d{1,2}):(\\d{2})/);
+  const hm = raw.match(/(^|\\s)(\d{1,2}):(\d{2})/);
   return hm ? hm[2].padStart(2,"0")+":"+hm[3] : raw;
 }
 
@@ -30,22 +30,22 @@ function normalizeBoard(payload: any) {
   ))) || [];
 
   return rows.map((row:any) => {
-    const delay = Number(row.delayMinutes ?? row.delay ?? row.retrasoMinutos);
+    const delay = Number(row.delayMinutes ?? row.delay ?? row.retrasoMinutos ?? row.delay_min);
     return {
-      time: normalizeTime(row.departureTime ?? row.scheduledDeparture ?? row.departure ?? row.horaSalida ?? row.time),
-      destination: text(row.destinationName ?? row.destination ?? row.destino ?? row.arrivalName),
-      line: text(row.lineName ?? row.line ?? row.linea),
-      train: text(row.trainCode ?? row.trainNumber ?? row.train ?? row.numeroTren),
+      time: normalizeTime(row.departureTime ?? row.scheduledDeparture ?? row.departure ?? row.horaSalida ?? row.time ?? row.hour),
+      destination: text(row.destinationName ?? row.destination ?? row.destino ?? row.arrivalName ?? row.to),
+      line: text(row.lineName ?? row.line ?? row.linea ?? row.service),
+      train: text(row.trainCode ?? row.trainNumber ?? row.train ?? row.numeroTren ?? row.number),
       delay: Number.isFinite(delay) ? delay : null,
       platform: text(row.platform ?? row.platformName ?? row.via ?? row.track) || null,
-      id: text(row.id ?? row.trainId) || null
+      id: text(row.id ?? row.trainId ?? row.tripId) || null
     };
   }).filter((row:any) => row.time && row.destination).slice(0,30);
 }
 
 export async function GET(request: NextRequest) {
   const station = request.nextUrl.searchParams.get("station") || "79006";
-  if (!/^\\d+$/.test(station)) {
+  if (!/^\d+$/.test(station)) {
     return NextResponse.json({ error: "Código de estación no válido." }, { status: 400 });
   }
 
