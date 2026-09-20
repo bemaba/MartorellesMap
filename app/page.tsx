@@ -31,6 +31,7 @@ function formatMinutes(total:number) {
 export default function Home() {
   const [origin,setOrigin]=useState("Martorelles");
   const [originQuery,setOriginQuery]=useState("Martorelles");
+  const [originChoice,setOriginChoice]=useState("Martorelles");
   const [destination,setDestination]=useState("CaixaForum Barcelona");
   const [arrival,setArrival]=useState("13:45");
   const [buffer,setBuffer]=useState("10");
@@ -144,6 +145,63 @@ export default function Home() {
             <input className="input" value={origin} onChange={e=>handleOriginChange(e.target.value)} />
             <button className="locationButton" type="button" onClick={useCurrentLocation} disabled={locating}>{locating ? "Localizando…" : "📍 Mi ubicación"}</button>
           </div>
+          {locationError && <div className="error">{locationError}</div>}
+        </div>
+        <div><label className="label">¿A dónde?</label><input className="input" value={destination} onChange={e=>setDestination(e.target.value)} /></div>
+        <div className="row">
+          <div><label className="label">Quiero llegar a</label><input className="input" type="time" value={arrival} onChange={e=>setArrival(e.target.value)} /></div>
+          <div><label className="label">Margen</label><select className="input" value={buffer} onChange={e=>setBuffer(e.target.value)}><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option></select></div>
+        </div>
+        <div><label className="label">¿Cómo quieres llegar al transporte público?</label><div className="choices"><button className={"choice "+(mode==="car"?"active":"")} onClick={()=>setMode("car")}>🚗 En coche</button><button className={"choice "+(mode==="transit"?"active":"")} onClick={()=>setMode("transit")}>🚶 Sin coche</button></div></div>
+        <button className="primary" onClick={()=>{setSubmitted(true); loadTrains();}}>Calcular ruta</button>
+        <div className="hint">multiMap usa la hora de llegada, el margen y las conexiones para construir la ruta.</div>
+      </div>
+    </section>
+
+    {submitted && <section className="results">
+      <div className="hint">Resultados para llegar sobre las {arrival}.</div>
+      {options.map((option,i)=><article className="option" key={i}>
+        <h3>{option.title}</h3><div className="muted">{option.duration} · llegada objetivo {arrival}</div>
+        {option.legs.map((leg,j)=><div className="line" key={j}>
+          <div className="icon">{leg.icon}</div>
+          <div>
+            <div className="time">{leg.start} → {leg.end} · {leg.mode}</div>
+            <div>{leg.from} → {leg.to}</div>
+            {leg.note&&<div className="muted">{leg.note}</div>}
+            {(leg.mode==="Coche"||leg.mode==="A pie")&&<a className="link" href={mapsUrl(leg.mode==="Coche"?originQuery:leg.from,leg.to,leg.mode==="Coche"?"driving":"walking")} target="_blank" rel="noreferrer">Abrir tramo en Google Maps ↗</a>}
+            {leg.mode==="Rodalies" && <a className="link" href={mapsUrl(leg.from,leg.to,"transit")} target="_blank" rel="noreferrer">Abrir tramo en Google Maps ↗</a>}
+          </div>
+        </div>)}
+
+         {trainsError && <div className="error">{trainsError}</div>}
+          {!trainsError && trainsLoading && trains.length===0 && <div className="muted">Consultando salidas reales…</div>}
+          {!trainsError && trainCandidates.map((train,index)=>{
+            const key=train.id || `${train.train}-${train.time}-${index}`;
+            const isSelected=selectedTrain===key;
+            return <button className={"trainCard "+(isSelected?"selectedTrain":"")} key={key} onClick={()=>chooseTrain(train)}>
+              <div className="trainTime">{train.time}</div>
+              <div className="trainMain"><b>{train.destination}</b><div className="muted">{train.line}{train.train ? ` · tren ${train.train}` : ""}{train.platform ? ` · vía ${train.platform}` : ""}</div></div>
+              <div className="trainMeta">{train.delay && train.delay > 0 ? `+${train.delay} min` : "Puntual"}</div>
+              <div className="trainFit">{train.catchesIt ? `🟢 Llegada estimada ${formatMinutes(train.estimatedArrival)}` : `🔴 No llega antes de ${arrival}`}</div>
+            </button>;
+          })}
+          {!trainsError && !trainsLoading && trainCandidates.length===0 && <div className="muted">No hay salidas compatibles en el tablero ahora mismo.</div>}
+          {trainCandidates.length>0 && <div className="nextHint">Si seleccionas un tren que no puedes coger, el siguiente aparece justo debajo para que puedas comparar el margen.</div>}
+          <div className="attribution">Datos ferroviarios públicos de Renfe/ADIF mediante RadarDeTrenes. Actualización aproximada del tablero: 15–30 s. Información orientativa.</div>
+        </div>
+      </article>)}
+    </section>}
+
+ </main>;
+        <div>
+          <label className="label">¿Desde dónde?</label>
+          <select className="input" value={originChoice} onChange={e=>handleOriginChange(e.target.value)}>
+            <option value="Martorelles">Martorelles</option>
+            <option value="Mollet del Vallès">Mollet del Vallès</option>
+            <option value="Barcelona">Barcelona</option>
+            <option value="current">{locating ? "📍 Localizando…" : "📍 Mi ubicación actual"}</option>
+          </select>
+          {originChoice === "current" && origin === "Mi ubicación actual" && <div className="locationSelected">📍 Usando tu ubicación actual</div>}
           {locationError && <div className="error">{locationError}</div>}
         </div>
         <div><label className="label">¿A dónde?</label><input className="input" value={destination} onChange={e=>setDestination(e.target.value)} /></div>
