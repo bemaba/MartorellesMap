@@ -11,11 +11,43 @@ function mapsUrl(from:string,to:string,mode:"driving"|"walking") {
 
 export default function Home() {
   const [origin,setOrigin]=useState("Martorelles");
+  const [originQuery,setOriginQuery]=useState("Martorelles");
   const [destination,setDestination]=useState("CaixaForum Barcelona");
   const [arrival,setArrival]=useState("13:45");
   const [buffer,setBuffer]=useState("10");
   const [mode,setMode]=useState<Mode>("car");
   const [submitted,setSubmitted]=useState(false);
+  const [locating,setLocating]=useState(false);
+  const [locationError,setLocationError]=useState("");
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setLocationError("Tu navegador no permite obtener la ubicación.");
+      return;
+    }
+
+    setLocating(true);
+    setLocationError("");
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        const coordinates = `${coords.latitude}, ${coords.longitude}`;
+        setOrigin("Mi ubicación actual");
+        setOriginQuery(coordinates);
+        setLocating(false);
+      },
+      () => {
+        setLocationError("No hemos podido obtener tu ubicación. Comprueba los permisos del navegador.");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  };
+
+  const handleOriginChange = (value:string) => {
+    setOrigin(value);
+    setOriginQuery(value);
+  };
 
   const options = useMemo(() => {
     if (!submitted) return [];
@@ -39,13 +71,22 @@ export default function Home() {
 
   return <main className="shell">
     <header className="hero">
-      <div className="logo">MartorellesMap</div>
+      <div className="logo">multiMap</div>
       <p className="subtitle">Una ruta. Todos los medios. Con los horarios y márgenes pensados para llegar a tiempo.</p>
     </header>
 
     <section className="card">
       <div className="fields">
-        <div><label className="label">¿Desde dónde?</label><input className="input" value={origin} onChange={e=>setOrigin(e.target.value)} /></div>
+        <div>
+          <label className="label">¿Desde dónde?</label>
+          <div className="locationRow">
+            <input className="input" value={origin} onChange={e=>handleOriginChange(e.target.value)} />
+            <button className="locationButton" type="button" onClick={useCurrentLocation} disabled={locating}>
+              {locating ? "Localizando…" : "📍 Mi ubicación"}
+            </button>
+          </div>
+          {locationError && <div className="error">{locationError}</div>}
+        </div>
         <div><label className="label">¿A dónde?</label><input className="input" value={destination} onChange={e=>setDestination(e.target.value)} /></div>
         <div className="row">
           <div><label className="label">Quiero llegar a</label><input className="input" type="time" value={arrival} onChange={e=>setArrival(e.target.value)} /></div>
@@ -61,7 +102,7 @@ export default function Home() {
       <div className="hint">Resultados para llegar sobre las {arrival}. Los horarios mostrados ahora son datos de demostración.</div>
       {options.map((option,i)=><article className="option" key={i}>
         <h3>{option.title}</h3><div className="muted">{option.duration} · llegada {option.arrival}<span className="badge">MVP</span></div>
-        {option.legs.map((leg,j)=><div className="line" key={j}><div className="icon">{leg.icon}</div><div><div className="time">{leg.start} → {leg.end} · {leg.mode}</div><div>{leg.from} → {leg.to}</div>{leg.note&&<div className="muted">{leg.note}</div>}{(leg.mode==="Coche"||leg.mode==="A pie")&&<a className="link" href={mapsUrl(leg.from,leg.to,leg.mode==="Coche"?"driving":"walking")} target="_blank" rel="noreferrer">Abrir tramo en Google Maps ↗</a>}</div></div>)}
+        {option.legs.map((leg,j)=><div className="line" key={j}><div className="icon">{leg.icon}</div><div><div className="time">{leg.start} → {leg.end} · {leg.mode}</div><div>{leg.from} → {leg.to}</div>{leg.note&&<div className="muted">{leg.note}</div>}{(leg.mode==="Coche"||leg.mode==="A pie")&&<a className="link" href={mapsUrl(leg.mode==="Coche"?originQuery:leg.from,leg.to,leg.mode==="Coche"?"driving":"walking")} target="_blank" rel="noreferrer">Abrir tramo en Google Maps ↗</a>}</div></div>)}
       </article>)}
     </section>}
 
