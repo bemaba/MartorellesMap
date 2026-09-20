@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MartorellesMap",
-  description: "Planifica viajes multimodales combinando coche, tren y caminar.",
+  title: "multiMap",
+  description: "Planifica viajes multimodales combinando coche, transporte público y caminar.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
